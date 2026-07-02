@@ -15,6 +15,13 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
 ::-webkit-scrollbar-thumb { background:#b8943c; border-radius:8px; }
 ::-webkit-scrollbar-thumb:hover { background:#d4ae4a; }
 .container { max-width:1440px; margin:0 auto; }
+
+/* 进度条 */
+.progress-bar-container { position:sticky; top:0; z-index:100; background:rgba(11,10,10,0.85); backdrop-filter:blur(8px); padding:8px 16px; border-radius:12px; margin-bottom:16px; display:flex; align-items:center; gap:16px; border:1px solid rgba(184,148,60,0.2); }
+.progress-bar-track { flex:1; height:6px; background:#2a241e; border-radius:4px; overflow:hidden; }
+.progress-bar-fill { height:100%; width:0%; background:linear-gradient(90deg, #b8943c, #f0d080); transition:width 0.3s ease; }
+.progress-text { font-size:14px; color:#d4ae4a; white-space:nowrap; font-weight:500; }
+
 .header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:28px 32px 20px 32px; background:linear-gradient(135deg, rgba(30,25,20,0.9) 0%, rgba(15,12,10,0.95) 100%); border:1px solid rgba(184,148,60,0.25); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(184,148,60,0.15); margin-bottom:32px; backdrop-filter:blur(10px); position:relative; overflow:hidden; }
 .header::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, transparent, #b8943c, #f0d080, #b8943c, transparent); opacity:0.6; }
 .header-left { display:flex; align-items:center; gap:18px; z-index:1; }
@@ -53,7 +60,7 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
 .empty-state { grid-column:1/-1; text-align:center; padding:80px 20px; color:rgba(200,185,160,0.3); font-weight:300; letter-spacing:1px; }
 .empty-state span { font-size:48px; display:block; margin-bottom:16px; opacity:0.4; }
 
-/* ===== 模态框 ===== */
+/* 模态框 */
 .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(20px); z-index:9999; display:none; justify-content:center; align-items:center; padding:30px; animation:fadeIn 0.3s ease; }
 .modal-overlay.active { display:flex; }
 .modal-content { max-width:95vw; max-height:95vh; position:relative; background:rgba(15,12,10,0.98); border:1px solid rgba(184,148,60,0.3); border-radius:20px; padding:24px 24px 20px 24px; box-shadow:0 40px 120px rgba(0,0,0,0.9); animation:zoomIn 0.35s cubic-bezier(0.25,0.46,0.45,0.94); display:flex; flex-direction:column; overflow:hidden; }
@@ -79,6 +86,15 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
 </head>
 <body>
 <div class="container">
+    <!-- 进度条 -->
+    <div class="progress-bar-container" id="progressContainer">
+        <span style="font-size:18px;">📊</span>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-text" id="progressText">0 / 149</span>
+    </div>
+
     <header class="header">
         <div class="header-left">
             <div class="logo-icon">⛽</div>
@@ -111,7 +127,7 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
     <div class="grid" id="imageGrid"></div>
 </div>
 
-<!-- ===== 模态框 ===== -->
+<!-- 模态框 -->
 <div class="modal-overlay" id="modal">
     <div class="modal-content">
         <button class="modal-close" id="modalClose">✕</button>
@@ -282,6 +298,16 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
     ];
 
     // ===== 核心函数 =====
+    let loadedCount = 0;
+    const totalImages = IMAGE_DATA.length;
+
+    function updateProgress() {
+        loadedCount++;
+        const percent = Math.min(100, Math.round((loadedCount / totalImages) * 100));
+        document.getElementById('progressFill').style.width = percent + '%';
+        document.getElementById('progressText').textContent = `${loadedCount} / ${totalImages}`;
+    }
+
     function getCategories() { const s=new Set(); IMAGE_DATA.forEach(i=>{ if(i.path) s.add(i.category); }); return Array.from(s).sort(); }
 
     function renderTags() {
@@ -338,9 +364,9 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
             html += `
                 <div class="card" data-id="${item.id}" data-name="${item.name}" data-category="${item.category}" data-path="${p}" data-description="${item.description || ''}">
                     <div class="card-img-wrapper">
-                        <img src="${p}" alt="${item.name}" loading="lazy" decoding="async" fetchpriority="low"
-                             onload="this.classList.add('loaded')" 
-                             onerror="this.style.opacity='0.2'; this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(200,185,160,0.2);font-size:14px;\\'>⚠️ 图片加载失败<br/><span style=\\'font-size:11px;\\'>${item.name}</span></div>'"/>
+                        <img src="${p}" alt="${item.name}" decoding="async" fetchpriority="low"
+                             onload="this.classList.add('loaded'); updateProgress();" 
+                             onerror="this.style.opacity='0.2'; this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(200,185,160,0.2);font-size:14px;\\'>⚠️ 图片加载失败<br/><span style=\\'font-size:11px;\\'>${item.name}</span></div>'; updateProgress();"/>
                         <span class="card-index">#${String(index+1).padStart(2,'0')}</span>
                     </div>
                     <div class="card-info">
@@ -362,7 +388,7 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
         });
     }
 
-    // ===== 模态框控制（含缩放拖拽） =====
+    // ===== 模态框控制 =====
     let currentScale = 1;
     let panX = 0, panY = 0;
     let isDragging = false;
@@ -470,6 +496,9 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
         renderGrid();
         document.querySelector('.tag[data-filter="all"]')?.classList.add('active');
         document.querySelectorAll('.tag[data-filter]:not([data-filter="all"])').forEach(t => t.classList.remove('active'));
+        // 初始化进度条显示
+        document.getElementById('progressFill').style.width = '0%';
+        document.getElementById('progressText').textContent = `0 / ${totalImages}`;
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
