@@ -338,7 +338,7 @@ body { font-family:'Inter',sans-serif; background:#0b0a0a; background-image:radi
             html += `
                 <div class="card" data-id="${item.id}" data-name="${item.name}" data-category="${item.category}" data-path="${p}" data-description="${item.description || ''}">
                     <div class="card-img-wrapper">
-                        <img src="${p}" alt="${item.name}" loading="lazy" 
+                        <img src="${p}" alt="${item.name}" loading="lazy" decoding="async" fetchpriority="low"
                              onload="this.classList.add('loaded')" 
                              onerror="this.style.opacity='0.2'; this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(200,185,160,0.2);font-size:14px;\\'>⚠️ 图片加载失败<br/><span style=\\'font-size:11px;\\'>${item.name}</span></div>'"/>
                         <span class="card-index">#${String(index+1).padStart(2,'0')}</span>
